@@ -1,22 +1,42 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@react-native-vector-icons/ionicons';
+import { Home, Heart } from 'lucide-react-native';
+
+// Screens
 import HomeScreen from '../screens/HomeScreen';
 import WishlistScreen from '../screens/WishlistScreen';
 import DetailsScreen from '../screens/DetailsScreen';
 import WishlistDetailScreen from '../screens/WishlistDetailScreen';
+import ViewAllScreen from '../screens/ViewAll';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+// Dark theme override
+const DarkTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#0d0d0d',
+    card: '#1a1a1a',
+    text: '#e0e0e0',
+    border: '#2a2a2a',
+    primary: '#4CAF50',
+  },
+};
+
+// Home Stack Navigator
 function HomeStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: '#0d0d0d' },
+        headerTintColor: '#e0e0e0',
         headerTitleAlign: 'center',
+        headerTitleStyle: { fontSize: 16, fontWeight: '600' },
+        animation: 'slide_from_right',
       }}
     >
       <Stack.Screen
@@ -25,25 +45,32 @@ function HomeStack() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="ViewAll"
+        component={ViewAllScreen}
+        options={{ headerShown: true, title: 'View All' }}
+      />
+      <Stack.Screen
         name="Details"
         component={DetailsScreen}
         options={{
           presentation: 'modal',
           gestureEnabled: true,
+          title: 'Stock Details',
         }}
       />
     </Stack.Navigator>
   );
 }
-
 // Wishlist Stack Navigator
 function WishlistStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: '#0d0d0d' },
+        headerTintColor: '#e0e0e0',
         headerTitleAlign: 'center',
+        headerTitleStyle: { fontSize: 16, fontWeight: '600' },
+        animation: 'slide_from_right',
       }}
     >
       <Stack.Screen
@@ -51,50 +78,57 @@ function WishlistStack() {
         component={WishlistScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="WishlistDetail" component={WishlistDetailScreen} />
+      <Stack.Screen
+        name="WishlistDetail"
+        component={WishlistDetailScreen}
+        options={{ title: 'My Wishlist' }}
+      />
       <Stack.Screen
         name="Details"
         component={DetailsScreen}
         options={{
           presentation: 'modal',
-          gestureEnabled: true,
+          title: 'Stock Details',
         }}
       />
     </Stack.Navigator>
   );
 }
 
-// Tab Navigator
 function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
-
           if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
+            return (
+              <Home size={size} color={color} fill={focused ? color : 'none'} />
+            );
           } else if (route.name === 'Wishlist') {
-            iconName = focused ? 'heart' : 'heart-outline';
-          } else {
-            iconName = 'ellipse';
+            return (
+              <Heart
+                size={size}
+                color={color}
+                fill={focused ? color : 'none'}
+              />
+            );
           }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return null;
         },
         tabBarActiveTintColor: '#4CAF50',
-        tabBarInactiveTintColor: '#666',
+        tabBarInactiveTintColor: '#888',
         tabBarStyle: {
-          backgroundColor: '#1a1a2e',
-          borderTopColor: '#3a3a6b',
+          backgroundColor: '#0d0d0d',
+          borderTopColor: '#2a2a2a',
           borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: 58,
+          paddingBottom: 6,
+          paddingTop: 6,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
+          fontSize: 11,
+          fontWeight: '500',
+          letterSpacing: 0.3,
         },
         headerShown: false,
       })}
@@ -102,34 +136,34 @@ function TabNavigator() {
       <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{
-          tabBarLabel: 'Home',
-        }}
+        options={{ tabBarLabel: 'Home' }}
       />
       <Tab.Screen
         name="Wishlist"
         component={WishlistStack}
-        options={{
-          tabBarLabel: 'Watchlist',
-        }}
+        options={{ tabBarLabel: 'Wishlist' }}
       />
     </Tab.Navigator>
   );
 }
 
-// Main App Navigator
+
 export default function AppNavigation() {
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={DarkTheme}>
       <TabNavigator />
     </NavigationContainer>
   );
 }
 
-// Type definitions for navigation
 export type RootStackParamList = {
   Home: undefined;
   Wishlist: undefined;
+  ViewAll: {
+    type: 'gainers' | 'losers';
+    data: any[];
+    title: string;
+  };
   Details: { stock: any };
   WishlistDetail: { wishlistId: string; wishlistName: string };
 };

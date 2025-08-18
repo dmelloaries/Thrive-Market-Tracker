@@ -3,10 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface Stock {
   id: string;
-  name: string;
+  ticker: string; 
   price: string;
-  change: string;
-  symbol?: string;
+  change_percentage: string; 
+  volume?: string;
+  symbol?: string; 
 }
 
 export interface Wishlist {
@@ -19,7 +20,7 @@ interface WishlistState {
   wishlists: Wishlist[];
   isLoading: boolean;
 
-  // Actions
+  
   loadWishlists: () => Promise<void>;
   createWishlist: (name: string) => Promise<void>;
   deleteWishlist: (wishlistId: string) => Promise<void>;
@@ -48,8 +49,8 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
       } else {
         // Create default wishlists
         const defaultWishlists: Wishlist[] = [
-          { id: '1', name: 'Wishlist 1', stocks: [] },
-          { id: '2', name: 'Wishlist 2', stocks: [] },
+          { id: '1', name: 'My Favorites', stocks: [] },
+          { id: '2', name: 'Tech Stocks', stocks: [] },
         ];
         await AsyncStorage.setItem(
           STORAGE_KEY,
@@ -92,14 +93,26 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
   },
 
   addStockToWishlist: async (wishlistId: string, stock: Stock) => {
+  
+    const stockToAdd: Stock = {
+      id: stock.id || stock.ticker || `${stock.ticker}-${Date.now()}`,
+      ticker: stock.ticker,
+      price: stock.price,
+      change_percentage: stock.change_percentage,
+      volume: stock.volume,
+      symbol: stock.symbol || stock.ticker,
+    };
+
     const updatedWishlists = get().wishlists.map(wishlist => {
       if (wishlist.id === wishlistId) {
         // Check if stock already exists
-        const stockExists = wishlist.stocks.some(s => s.id === stock.id);
+        const stockExists = wishlist.stocks.some(
+          s => s.id === stockToAdd.id || s.ticker === stockToAdd.ticker,
+        );
         if (!stockExists) {
           return {
             ...wishlist,
-            stocks: [...wishlist.stocks, stock],
+            stocks: [...wishlist.stocks, stockToAdd],
           };
         }
       }
@@ -137,7 +150,11 @@ export const useWishlistStore = create<WishlistState>((set, get) => ({
 
   isStockInWishlist: (wishlistId: string, stockId: string) => {
     const wishlist = get().wishlists.find(w => w.id === wishlistId);
-    return wishlist?.stocks.some(stock => stock.id === stockId) || false;
+    return (
+      wishlist?.stocks.some(
+        stock => stock.id === stockId || stock.ticker === stockId,
+      ) || false
+    );
   },
 
   getWishlistById: (wishlistId: string) => {

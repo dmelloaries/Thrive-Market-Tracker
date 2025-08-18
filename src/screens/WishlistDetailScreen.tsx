@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
@@ -27,9 +28,13 @@ export default function WishlistDetailScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: wishlistName,
-      headerStyle: { backgroundColor: '#1a1a2e' },
-      headerTintColor: '#fff',
+      headerStyle: { backgroundColor: '#111111' },
+      headerTintColor: '#ffffff',
       headerTitleAlign: 'center',
+      headerTitleStyle: {
+        fontWeight: '600',
+        fontSize: 18,
+      },
     });
   }, [navigation, wishlistName]);
 
@@ -37,151 +42,252 @@ export default function WishlistDetailScreen() {
     navigation.navigate('Details' as never, { stock } as never);
   };
 
-  const handleRemoveStock = (stockId: string, stockName: string) => {
-    Alert.alert('Remove Stock', `Remove ${stockName} from ${wishlistName}?`, [
-      { text: 'Cancel', style: 'cancel' },
+  const handleRemoveStock = (stockId: string, stockTicker: string) => {
+    Alert.alert(
+      'Remove Stock',
+      `Remove ${stockTicker} from ${wishlistName}?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => removeStockFromWishlist(wishlistId, stockId),
+        },
+      ],
       {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => removeStockFromWishlist(wishlistId, stockId),
+        cancelable: true,
+        userInterfaceStyle: 'dark',
       },
-    ]);
-  };
-
-  const renderStockItem = ({ item, index }: { item: Stock; index: number }) => {
-    const isLeft = index % 2 === 0;
-
-    return (
-      <View
-        style={[
-          styles.stockItemContainer,
-          isLeft ? styles.leftItem : styles.rightItem,
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.stockItem}
-          onPress={() => navigateToStock(item)}
-        >
-          <View style={styles.stockHeader}>
-            <View style={styles.stockIcon}>
-              <Text style={styles.stockIconText}>
-                {item.name.substring(0, 2).toUpperCase()}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => handleRemoveStock(item.id, item.name)}
-            >
-              <Ionicons name="close" size={16} color="#999" />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.stockName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <Text style={styles.stockPrice}>{item.price}</Text>
-          <Text
-            style={[
-              styles.stockChange,
-              { color: item.change.startsWith('+') ? '#4CAF50' : '#F44336' },
-            ]}
-          >
-            {item.change}
-          </Text>
-        </TouchableOpacity>
-      </View>
     );
   };
 
-  const renderData = () => {
-    if (!wishlist?.stocks.length) return [];
+  const renderStockCard = ({ item, index }: { item: Stock; index: number }) => {
+    const isPositive = item.change_percentage?.startsWith('+');
+    const isNegative = item.change_percentage?.startsWith('-');
 
-    const data = [];
-    for (let i = 0; i < wishlist.stocks.length; i += 2) {
-      const row = [];
-      row.push(wishlist.stocks[i]);
-      if (i + 1 < wishlist.stocks.length) {
-        row.push(wishlist.stocks[i + 1]);
-      }
-      data.push({ id: `row-${i}`, stocks: row });
-    }
-    return data;
+    return (
+      <TouchableOpacity
+        style={[styles.stockCard, { marginRight: index % 2 === 0 ? 6 : 0 }]}
+        onPress={() => navigateToStock(item)}
+        activeOpacity={0.8}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.stockIcon}>
+            <Text style={styles.stockIconText}>
+              {item.ticker?.substring(0, 2)?.toUpperCase() || 'ST'}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => handleRemoveStock(item.id, item.ticker)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="close" size={16} color="#ef4444" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.stockInfo}>
+          <Text style={styles.stockSymbol} numberOfLines={1}>
+            {item.ticker}
+          </Text>
+          <Text style={styles.stockPrice}>
+            ${parseFloat(item.price).toFixed(2)}
+          </Text>
+          <Text
+            style={[
+              styles.changePercentage,
+              isPositive
+                ? styles.positiveChange
+                : isNegative
+                ? styles.negativeChange
+                : styles.neutralChange,
+            ]}
+          >
+            {item.change_percentage || 'N/A'}
+          </Text>
+        </View>
+
+        <View
+          style={[
+            styles.trendIndicator,
+            isPositive
+              ? styles.trendUp
+              : isNegative
+              ? styles.trendDown
+              : styles.trendNeutral,
+          ]}
+        >
+          <Ionicons
+            name={
+              isPositive
+                ? 'trending-up'
+                : isNegative
+                ? 'trending-down'
+                : 'remove'
+            }
+            size={12}
+            color={isPositive ? '#10b981' : isNegative ? '#ef4444' : '#6b7280'}
+          />
+        </View>
+      </TouchableOpacity>
+    );
   };
 
-  const renderRow = ({ item }: { item: { id: string; stocks: Stock[] } }) => (
-    <View style={styles.row}>
-      {item.stocks.map((stock, index) =>
-        renderStockItem({ item: stock, index }),
-      )}
+  const renderEmptyState = () => (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconContainer}>
+        <Ionicons name="heart-outline" size={48} color="#374151" />
+      </View>
+      <Text style={styles.emptyTitle}>No stocks in this wishlist</Text>
+      <Text style={styles.emptyDescription}>
+        Start building your wishlist by adding stocks from the stock details
+        page
+      </Text>
+      <TouchableOpacity
+        style={styles.browseButton}
+        onPress={() => navigation.navigate('Home' as never)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="search-outline" size={16} color="#6b7280" />
+        <Text style={styles.browseButtonText}>Browse Stocks</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderErrorState = () => (
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+      </View>
+      <Text style={styles.emptyTitle}>Wishlist not found</Text>
+      <Text style={styles.emptyDescription}>
+        This wishlist may have been deleted or doesn't exist
+      </Text>
+      <TouchableOpacity
+        style={styles.retryButton}
+        onPress={() => loadWishlists()}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="refresh-outline" size={16} color="#6b7280" />
+        <Text style={styles.retryButtonText}>Try Again</Text>
+      </TouchableOpacity>
     </View>
   );
 
   if (!wishlist) {
     return (
-      <View style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Watchlist not found</Text>
-        </View>
-      </View>
+      <SafeAreaView style={styles.container}>{renderErrorState()}</SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {wishlist.stocks.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="heart-outline" size={64} color="#666" />
-          <Text style={styles.emptyText}>No stocks in this watchlist</Text>
-          <Text style={styles.emptySubtext}>
-            Add stocks from the stock details page
-          </Text>
-        </View>
+        renderEmptyState()
       ) : (
-        <FlatList
-          data={renderData()}
-          renderItem={renderRow}
-          keyExtractor={item => item.id}
-          style={styles.list}
-          showsVerticalScrollIndicator={false}
-          numColumns={1}
-        />
+        <View style={styles.content}>
+          {/* Stats Header */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statsCard}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{wishlist.stocks.length}</Text>
+                <Text style={styles.statLabel}>
+                  Stock{wishlist.stocks.length !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{wishlistName}</Text>
+                <Text style={styles.statLabel}>Wishlist</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Stock Grid */}
+          <FlatList
+            data={wishlist.stocks}
+            renderItem={renderStockCard}
+            numColumns={2}
+            keyExtractor={item => item.id}
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            columnWrapperStyle={styles.row}
+          />
+        </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
-    padding: 16,
+    backgroundColor: '#000000',
+  },
+  content: {
+    flex: 1,
+  },
+  statsContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  statsCard: {
+    backgroundColor: '#111111',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#1f1f1f',
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: '#1f1f1f',
+    marginHorizontal: 20,
   },
   list: {
     flex: 1,
+    paddingHorizontal: 20,
+  },
+  listContent: {
+    paddingBottom: 40,
   },
   row: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  stockItemContainer: {
+  stockCard: {
     flex: 1,
-  },
-  leftItem: {
-    marginRight: 8,
-  },
-  rightItem: {
-    marginLeft: 8,
-  },
-  stockItem: {
-    backgroundColor: '#2c2c54',
+    backgroundColor: '#111111',
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#3a3a6b',
-    minHeight: 120,
+    borderColor: '#1f1f1f',
+    maxWidth: '48%',
+    position: 'relative',
   },
-  stockHeader: {
+  cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
@@ -190,53 +296,133 @@ const styles = StyleSheet.create({
   stockIcon: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#4CAF50',
-    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#374151',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   stockIconText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    color: '#ffffff',
+    fontWeight: '600',
+    fontSize: 11,
   },
   removeButton: {
-    padding: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  stockName: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+  stockInfo: {
+    gap: 4,
     marginBottom: 8,
   },
-  stockPrice: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  stockSymbol: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
   },
-  stockChange: {
-    fontSize: 12,
-    fontWeight: '500',
+  stockPrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  changePercentage: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  positiveChange: {
+    color: '#10b981',
+  },
+  negativeChange: {
+    color: '#ef4444',
+  },
+  neutralChange: {
+    color: '#6b7280',
+  },
+  trendIndicator: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  trendUp: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  trendDown: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  trendNeutral: {
+    backgroundColor: 'rgba(107, 114, 128, 0.1)',
   },
   emptyContainer: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 40,
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingVertical: 60,
   },
-  emptyText: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginTop: 20,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: '#111111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#1f1f1f',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#ffffff',
     marginBottom: 8,
     textAlign: 'center',
   },
-  emptySubtext: {
-    color: '#999',
+  emptyDescription: {
     fontSize: 14,
+    color: '#6b7280',
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 24,
+    maxWidth: 280,
+  },
+  browseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111111',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#1f1f1f',
+  },
+  browseButtonText: {
+    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111111',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#1f1f1f',
+  },
+  retryButtonText: {
+    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

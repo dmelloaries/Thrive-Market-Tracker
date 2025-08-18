@@ -6,12 +6,12 @@ import {
   FlatList,
   StyleSheet,
 } from 'react-native';
-import { useWatchlistsStore } from '../store/wishlistStore';
+import { useWishlistStore } from '../store/wishlistStore';
 import { useNavigation } from '@react-navigation/native';
 
 export default function WatchlistScreen() {
   const navigation = useNavigation();
-  const watchlists = useWatchlistsStore(s => Object.keys(s.watchlists));
+  const watchlists = useWishlistStore(s => Object.keys(s.watchlists));
 
   return (
     <View style={styles.container}>
@@ -22,7 +22,7 @@ export default function WatchlistScreen() {
           <TouchableOpacity
             style={styles.item}
             onPress={() =>
-              navigation.navigate('WatchlistDetail', { watchlistName: item })
+              navigation.navigate('WishlistDetail', { wishlistName: item })
             }
           >
             <Text style={styles.text}>{item}</Text>
