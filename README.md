@@ -37,18 +37,6 @@ The app provides **real-time stock market data**, **watchlist management**, and 
 
 ---
 
-## 📋 Prerequisites
-
-Before running this project, make sure you have completed the [React Native Environment Setup](https://reactnative.dev/docs/set-up-your-environment) guide.
-
-**Required tools:**
-- Node.js (>= 16)  
-- React Native CLI  
-- Android Studio (for Android development)  
-- Xcode (for iOS development, macOS only)  
-- CocoaPods (for iOS dependencies)  
-
----
 
 ## 📱 App Screenshots
 
