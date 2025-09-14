@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Dimensions,
+} from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { DailyStockData } from '../hooks/useDailyStockData';
@@ -9,6 +15,8 @@ type StockChartProps = {
   isLoading: boolean;
   error: string | null;
 };
+
+const { width: screenWidth } = Dimensions.get('window');
 
 const StockChart: React.FC<StockChartProps> = ({ data, isLoading, error }) => {
   if (isLoading) {
@@ -54,7 +62,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, isLoading, error }) => {
     );
   }
 
-  // Prepare chart data (reverse to show chronologically)
+  //to Prepare chart data (reverse to show chronologically)
   const reversedData = [...data.timeSeries].reverse();
   const chartData = reversedData.map((item, index) => ({
     value: item.close,
@@ -64,9 +72,9 @@ const StockChart: React.FC<StockChartProps> = ({ data, isLoading, error }) => {
     labelTextStyle: { color: '#6b7280', fontSize: 10 },
   }));
 
-  // Calculate price change
+  //to Calculate price change
   const latestPrice = data.timeSeries[0]?.close;
-  const previousPrice = data.timeSeries?.close;
+  const previousPrice = data.timeSeries[1]?.close; 
   const priceChange =
     latestPrice && previousPrice ? latestPrice - previousPrice : 0;
   const priceChangePercent = previousPrice
@@ -85,6 +93,9 @@ const StockChart: React.FC<StockChartProps> = ({ data, isLoading, error }) => {
     if (vol >= 1000) return `${(vol / 1000).toFixed(1)}K`;
     return vol.toString();
   };
+
+  // Calculate chart width based on screen width minus margins and padding
+  const chartWidth = screenWidth - 72; 
 
   return (
     <View style={styles.container}>
@@ -128,8 +139,8 @@ const StockChart: React.FC<StockChartProps> = ({ data, isLoading, error }) => {
         <View style={styles.chartContainer}>
           <LineChart
             data={chartData}
-            height={200}
-            width={300}
+            height={180}
+            width={chartWidth - 32} // Subtract chart container padding
             color={isPositive ? '#10b981' : '#ef4444'}
             thickness={2.5}
             curved
@@ -152,14 +163,14 @@ const StockChart: React.FC<StockChartProps> = ({ data, isLoading, error }) => {
             yAxisColor="#1f1f1f"
             xAxisColor="#1f1f1f"
             yAxisTextStyle={{ color: '#6b7280', fontSize: 10 }}
-            xAxisLabelTextStyle={{ color: '#6b7280', fontSize: 10 }}
+            xAxisLabelTextStyle={{ color: '#6b7280', fontSize: 9 }}
             dataPointsColor={isPositive ? '#10b981' : '#ef4444'}
             dataPointsRadius={3}
             dataPointsWidth={2}
             textShiftY={-8}
             textShiftX={-10}
             textColor="#6b7280"
-            textFontSize={10}
+            textFontSize={9}
             hideYAxisText={false}
             yAxisLabelPrefix="$"
             showVerticalLines
@@ -170,7 +181,13 @@ const StockChart: React.FC<StockChartProps> = ({ data, isLoading, error }) => {
             stripOpacity={0.3}
             stripWidth={1}
             noOfSections={4}
-            spacing={45}
+            spacing={
+              chartData.length > 1
+                ? Math.max(20, (chartWidth - 100) / chartData.length)
+                : 40
+            }
+            initialSpacing={10}
+            endSpacing={10}
           />
         </View>
       </View>
@@ -233,6 +250,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
   },
   title: {
     fontSize: 16,
@@ -241,6 +259,7 @@ const styles = StyleSheet.create({
   },
   priceInfo: {
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   currentPrice: {
     fontSize: 18,
@@ -323,13 +342,16 @@ const styles = StyleSheet.create({
   chartWrapper: {
     padding: 20,
     paddingTop: 10,
+    paddingBottom: 10,
   },
   chartContainer: {
-    alignItems: 'center',
     backgroundColor: '#1f1f1f',
     borderRadius: 12,
     padding: 16,
     marginVertical: 8,
+    overflow: 'hidden', //so chart don't overflow
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statsContainer: {
     flexDirection: 'row',

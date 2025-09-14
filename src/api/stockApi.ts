@@ -77,9 +77,8 @@ export const fetchSymbolSearch = async (keywords: string) => {
     return data;
   } catch (error) {
     console.error('Error searching symbols:', error);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
+    if (error) {
+      console.error('Response status:', error);
     }
     throw error;
   }

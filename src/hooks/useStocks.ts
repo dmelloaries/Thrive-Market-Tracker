@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchTopGainersLosers } from '../api/stockApi';
 
 type StocksData = {
@@ -7,41 +7,22 @@ type StocksData = {
 };
 
 export function useStocks() {
-  const [data, setData] = useState<StocksData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<null | string>(null);
-
-  useEffect(() => {
-    fetchStocksData();
-  }, []);
-
-  const fetchStocksData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
+  const { data, isLoading, error, refetch } = useQuery<StocksData>({
+    queryKey: ['stocks'], // unique cache key
+    queryFn: async () => {
       const response = await fetchTopGainersLosers();
-
-      setData({
+      return {
         top_gainers: response.top_gainers || [],
         top_losers: response.top_losers || [],
-      });
-    } catch (err) {
-      console.error('Error fetching stocks data:', err);
-      setError(err.message || 'Failed to fetch stocks data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const refetch = () => {
-    fetchStocksData();
-  };
+      };
+    },
+    staleTime: 5 * 60 * 1000, 
+  });
 
   return {
     data,
     isLoading,
-    error,
+    error: error ? (error as Error).message : null,
     refetch,
   };
 }

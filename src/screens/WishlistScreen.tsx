@@ -32,13 +32,10 @@ export default function WishlistScreen() {
     wishlistId: string,
     wishlistName: string,
   ) => {
-    navigation.navigate(
-      'WishlistDetail' as never,
-      {
-        wishlistId,
-        wishlistName,
-      } as never,
-    );
+    navigation.navigate('WishlistDetail' as never, {
+      wishlistId,
+      wishlistName,
+    } as never);
   };
 
   const onRefresh = () => {

@@ -20,21 +20,6 @@ import { useWishlistStore, Stock } from '../store/wishlistStore';
 import { useCompanyOverview } from '../hooks/useCompanyOverview';
 import { useDailyStockData } from '../hooks/useDailyStockData';
 
-type CompanyOverview = {
-  Symbol: string;
-  Name: string;
-  Exchange: string;
-  Sector: string;
-  Industry: string;
-  Country: string;
-  Description?: string;
-  MarketCapitalization?: string;
-  PERatio?: string;
-  DividendYield?: string;
-  Beta?: string;
-  OfficialSite?: string;
-};
-
 export default function DetailsScreen() {
   const navigation = useNavigation();
   const route = useRoute<any>();
@@ -94,23 +79,6 @@ export default function DetailsScreen() {
     });
   }, [navigation, companyData?.Name, stock?.ticker, openBottomSheet]);
 
-  const handleWebsitePress = async (url: string) => {
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Error', 'Unable to open website', [], {
-          userInterfaceStyle: 'dark',
-        });
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Unable to open website', [], {
-        userInterfaceStyle: 'dark',
-      });
-    }
-  };
-
   const formatMarketCap = (marketCap: string) => {
     const value = parseInt(marketCap);
     if (value >= 1000000000000) {
@@ -140,7 +108,7 @@ export default function DetailsScreen() {
         </View>
         <Text style={styles.errorTitle}>Unable to load details</Text>
         <Text style={styles.errorDescription}>
-          {companyError || 'Please check your connection and try again'}
+          {'Please check your connection and try again'}
         </Text>
       </View>
     </View>
@@ -246,28 +214,6 @@ export default function DetailsScreen() {
             ))}
           </View>
         </View>
-
-        {/* Website Link */}
-        {companyData.OfficialSite && (
-          <TouchableOpacity
-            style={styles.websiteCard}
-            onPress={() => handleWebsitePress(companyData.OfficialSite!)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.websiteContent}>
-              <View style={styles.websiteIcon}>
-                <Ionicons name="globe-outline" size={20} color="#6b7280" />
-              </View>
-              <View style={styles.websiteInfo}>
-                <Text style={styles.websiteTitle}>Official Website</Text>
-                <Text style={styles.websiteUrl} numberOfLines={1}>
-                  {companyData.OfficialSite}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#6b7280" />
-            </View>
-          </TouchableOpacity>
-        )}
       </ScrollView>
     );
   };

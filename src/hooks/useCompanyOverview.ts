@@ -1,50 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { fetchCompanyOverview } from '../api/stockApi';
 
 export function useCompanyOverview(symbol: string) {
-  const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (!symbol) {
-      setIsLoading(false);
-      return;
-    }
-
-    fetchCompanyData();
-  }, [symbol]);
-
-  const fetchCompanyData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetchCompanyOverview(symbol);
-
-      if (response && response.Symbol) {
-        setData(response);
-      } else {
-        setError('Company data not found');
-      }
-    } catch (err) {
-      console.error('Error fetching company overview:', err);
-      setError(err.message || 'Failed to fetch company data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const refetch = () => {
-    if (symbol) {
-      fetchCompanyData();
-    }
-  };
-
-  return {
-    data,
-    isLoading,
-    error,
-    refetch,
-  };
+  return useQuery({
+    queryKey: ['companyOverview', symbol], // unique cache key
+    queryFn: () => fetchCompanyOverview(symbol), // to fetch data
+    enabled: !!symbol, // only run if symbol is truthy
+    staleTime: 5 * 60 * 1000, // 5 minutes in ms
+  });
 }

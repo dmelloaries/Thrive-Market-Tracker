@@ -47,7 +47,7 @@ function HomeStack() {
       <Stack.Screen
         name="ViewAll"
         component={ViewAllScreen}
-        options={{ headerShown: true, title: 'View All' }}
+        options={{ headerShown: false, title: 'View All' }}
       />
       <Stack.Screen
         name="Details"
@@ -146,7 +146,6 @@ function TabNavigator() {
     </Tab.Navigator>
   );
 }
-
 
 export default function AppNavigation() {
   return (
